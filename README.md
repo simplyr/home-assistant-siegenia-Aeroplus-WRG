@@ -3,6 +3,8 @@
 A Home Assistant integration to control and monitor Siegenia Aeroplus WRG smart ventilation devices with Co2 sensor.
 Vibe coded, based on the awesome work for iobroker here: https://github.com/Apollon77/ioBroker.siegenia 
 
+Tested with 4 Aeroplus WRG modules. Other siegenia devices might work, untested.
+
 ## Features
 
 ### Core Features
