@@ -6,6 +6,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.config_entries import ConfigEntry
 
 from .const import DOMAIN, DATA_CLIENT, DATA_COORDINATOR
+from .device import build_device_info
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities):
     data = hass.data[DOMAIN][entry.entry_id]
@@ -19,6 +20,7 @@ class SiegeniaOnlineBinarySensor(CoordinatorEntity, BinarySensorEntity):
     def __init__(self, client, coordinator, entry: ConfigEntry) -> None:
         super().__init__(coordinator)
         self._client = client
+        self._entry = entry
         # Get system name from device info
         system_name = self._get_system_name()
         self._attr_name = f"{system_name} Online" if system_name else "Siegenia Online"
@@ -34,6 +36,12 @@ class SiegeniaOnlineBinarySensor(CoordinatorEntity, BinarySensorEntity):
                 if system_name:
                     return system_name
         return None
+
+    @property
+    def device_info(self):
+        return build_device_info(
+            self.coordinator.data, self._entry.entry_id, self._entry.data.get("host")
+        )
 
     @property
     def is_on(self) -> bool:

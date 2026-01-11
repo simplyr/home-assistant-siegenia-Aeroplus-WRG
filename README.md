@@ -11,6 +11,7 @@ Tested with 4 Aeroplus WRG modules. Other siegenia devices might work, untested.
 - Local control via WebSocket connection (no cloud dependency)
 - Real-time updates through push notifications + polling (10s interval)
 - SSL support with configurable port (default: 443)
+- Device registry integration with serial/firmware details (when reported by the device)
 
 ### Available Entities
 
@@ -83,6 +84,7 @@ Tested with 4 Aeroplus WRG modules. Other siegenia devices might work, untested.
 - Maintains persistent connection with heartbeat (10s interval)
 - Automatic reconnection on connection loss
 - SSL support with self-signed certificate handling
+- Handles concatenated WebSocket JSON frames from the device
 
 ### Update Methods
 - Push updates through WebSocket for immediate state changes

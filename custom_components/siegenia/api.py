@@ -73,7 +73,8 @@ class SiegeniaClient:
 
             ssl_ctx = None
             if self._use_ssl:
-                ssl_ctx = ssl.create_default_context()
+                loop = asyncio.get_running_loop()
+                ssl_ctx = await loop.run_in_executor(None, ssl.create_default_context)
                 ssl_ctx.check_hostname = False
                 ssl_ctx.verify_mode = ssl.CERT_NONE
 

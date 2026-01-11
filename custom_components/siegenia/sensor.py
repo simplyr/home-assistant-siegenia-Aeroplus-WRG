@@ -9,6 +9,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.config_entries import ConfigEntry
 
 from .const import DOMAIN, DATA_COORDINATOR
+from .device import build_device_info
 
 UNIT_MAP = {
     "airbase.humidity.indoor": "%",
@@ -43,7 +44,6 @@ def _flatten(data: Dict[str, Any], parent: str = "", out: Dict[str, Any] | None 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities):
     data = hass.data[DOMAIN][entry.entry_id]
     coordinator = data[DATA_COORDINATOR]
-    base_id = entry.entry_id
 
     combined = {}
     for part in ("state", "params", "info"):
@@ -56,23 +56,30 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     entities: list[SensorEntity] = []
     for key, unit in UNIT_MAP.items():
         if key in flat:
-            entities.append(SiegeniaKeySensor(coordinator, base_id, key, unit))
+            entities.append(SiegeniaKeySensor(coordinator, entry, key, unit))
 
-    entities.append(SiegeniaRawStateSensor(coordinator, base_id))
+    entities.append(SiegeniaRawStateSensor(coordinator, entry))
     async_add_entities(entities)
 
 class SiegeniaKeySensor(CoordinatorEntity, SensorEntity):
-    def __init__(self, coordinator, base_id: str, key: str, unit: str | None) -> None:
+    def __init__(self, coordinator, entry: ConfigEntry, key: str, unit: str | None) -> None:
         super().__init__(coordinator)
+        self._entry = entry
         self._key = key
         # Get system name from device info
         system_name = self._get_system_name()
         name = key.replace("_", " ").replace(".", " ").title()
         self._attr_name = f"{system_name} {name}" if system_name else f"Siegenia {name}"
         slug = key.lower().replace(" ", "-").replace(".", "-").replace("_", "-")
-        self._attr_unique_id = f"{base_id}-{slug}"
+        self._attr_unique_id = f"{entry.entry_id}-{slug}"
         if unit:
             self._attr_native_unit_of_measurement = unit
+
+    @property
+    def device_info(self):
+        return build_device_info(
+            self.coordinator.data, self._entry.entry_id, self._entry.data.get("host")
+        )
             
     def _get_system_name(self) -> str | None:
         """Get the system name from device info."""
@@ -111,11 +118,12 @@ class SiegeniaRawStateSensor(CoordinatorEntity, SensorEntity):
     _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_icon = "mdi:code-json"
 
-    def __init__(self, coordinator, base_id: str) -> None:
+    def __init__(self, coordinator, entry: ConfigEntry) -> None:
         super().__init__(coordinator)
+        self._entry = entry
         system_name = self._get_system_name()
         self._attr_name = f"{system_name} Raw State" if system_name else "Siegenia Raw State"
-        self._attr_unique_id = f"{base_id}-raw-state"
+        self._attr_unique_id = f"{entry.entry_id}-raw-state"
         
     def _get_system_name(self) -> str | None:
         """Get the system name from device info."""
@@ -127,6 +135,12 @@ class SiegeniaRawStateSensor(CoordinatorEntity, SensorEntity):
                 if system_name:
                     return system_name
         return None
+
+    @property
+    def device_info(self):
+        return build_device_info(
+            self.coordinator.data, self._entry.entry_id, self._entry.data.get("host")
+        )
 
     @property
     def native_value(self) -> str:

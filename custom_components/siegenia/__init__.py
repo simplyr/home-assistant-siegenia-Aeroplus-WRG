@@ -5,6 +5,7 @@ from datetime import timedelta
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .const import (
@@ -15,6 +16,7 @@ from .const import (
     UPDATE_INTERVAL_SECONDS,
 )
 from .api import SiegeniaClient
+from .device import build_device_info
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -66,6 +68,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     )
 
     await coordinator.async_config_entry_first_refresh()
+
+    device_registry = dr.async_get(hass)
+    device_info = build_device_info(coordinator.data, entry.entry_id, host)
+    device_registry.async_get_or_create(
+        config_entry_id=entry.entry_id,
+        identifiers=device_info["identifiers"],
+        manufacturer=device_info.get("manufacturer"),
+        name=device_info.get("name"),
+        model=device_info.get("model"),
+        sw_version=device_info.get("sw_version"),
+        hw_version=device_info.get("hw_version"),
+        serial_number=device_info.get("serial_number"),
+    )
 
     # Push-triggered refresh when unsolicited WS messages arrive
     try:

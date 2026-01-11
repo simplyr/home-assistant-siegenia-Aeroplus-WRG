@@ -8,6 +8,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.config_entries import ConfigEntry
 
 from .const import DOMAIN, DATA_CLIENT, DATA_COORDINATOR
+from .device import build_device_info
 
 def _combined(data: dict | None) -> dict:
     data = data or {}
@@ -58,3 +59,9 @@ class SiegeniaAutoModeSwitch(CoordinatorEntity, SwitchEntity):
     async def async_turn_off(self, **kwargs: Any) -> None:
         await self._client.set_device_params({"automode": False, "auto_mode": False})
         await self.coordinator.async_request_refresh()
+
+    @property
+    def device_info(self):
+        return build_device_info(
+            self.coordinator.data, self._entry.entry_id, self._entry.data.get("host")
+        )
