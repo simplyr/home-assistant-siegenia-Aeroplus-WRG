@@ -28,9 +28,9 @@ Vibe coded, based on the awesome work for iobroker here: https://github.com/Apol
 - **Siegenia Auto Mode** (Switch): Toggle automatic operation mode
 
 #### Sensors
-- Temperature (Indoor/Outdoor) in °C
-- Humidity (Indoor/Outdoor) in %
-- CO₂ Level (ppm)
+- Temperature (Incoming/Outgoing air) in °C
+- Humidity (Incoming/Outgoing air) in %
+- CO₂ Level (ppm, `airquality.co2content` when available)
 - Air Quality
 - Maximum Fan Power
 - Manual Fan Power Cap

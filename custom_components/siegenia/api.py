@@ -44,6 +44,22 @@ class SiegeniaClient:
     def connected(self) -> bool:
         return self._ws is not None and not self._ws.closed
 
+    def set_on_push(self, callback) -> None:
+        self.on_push = callback
+
+    @staticmethod
+    def _iter_json_objects(raw: str):
+        decoder = json.JSONDecoder()
+        idx = 0
+        length = len(raw)
+        while True:
+            while idx < length and raw[idx].isspace():
+                idx += 1
+            if idx >= length:
+                return
+            obj, idx = decoder.raw_decode(raw, idx)
+            yield obj
+
     async def connect(self) -> None:
         async with self._connect_lock:
             if self.connected:
@@ -80,24 +96,31 @@ class SiegeniaClient:
         async for msg in ws:
             if msg.type == WSMsgType.TEXT:
                 try:
-                    data = json.loads(msg.data)
-                except Exception as exc:
+                    for data in self._iter_json_objects(msg.data):
+                        if not isinstance(data, dict):
+                            try:
+                                if callable(self.on_push):
+                                    self.on_push(data)
+                            except Exception as _exc:
+                                _LOGGER.debug("on_push callback error: %s", _exc)
+                            continue
+
+                        rid = data.get("id")
+                        status = data.get("status")
+                        payload = data.get("data")
+                        fut = self._pending.pop(rid, None)
+                        if fut is not None and not fut.done():
+                            fut.set_result((status, payload))
+                        else:
+                            # unsolicited push
+                            try:
+                                if callable(self.on_push):
+                                    self.on_push(data)
+                            except Exception as _exc:
+                                _LOGGER.debug("on_push callback error: %s", _exc)
+                except json.JSONDecodeError as exc:
                     _LOGGER.warning("WS JSON error: %s (%s)", exc, msg.data)
                     continue
-
-                rid = data.get("id")
-                status = data.get("status")
-                payload = data.get("data")
-                fut = self._pending.pop(rid, None)
-                if fut is not None and not fut.done():
-                    fut.set_result((status, payload))
-                else:
-                    # unsolicited push
-                    try:
-                        if callable(self.on_push):
-                            self.on_push(data)
-                    except Exception as _exc:
-                        _LOGGER.debug("on_push callback error: %s", _exc)
             elif msg.type in (WSMsgType.CLOSE, WSMsgType.CLOSED, WSMsgType.ERROR):
                 _LOGGER.debug("WS closed: %s", msg.type)
                 break
