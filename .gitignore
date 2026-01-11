@@ -42,3 +42,9 @@ venv.bak/
 .cloud
 .HA_VERSION
 home-assistant.log*
+
+# macOS
+.DS_Store
+
+# Local scratch
+.tmp/
