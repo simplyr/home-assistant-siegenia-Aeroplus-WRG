@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 from typing import Optional
@@ -9,6 +8,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.config_entries import ConfigEntry
 
 from .const import DOMAIN, DATA_CLIENT, DATA_COORDINATOR
+from .device import build_device_info
 
 def _combined(data: dict | None) -> dict:
     data = data or {}
@@ -74,6 +74,8 @@ class SiegeniaFanPowerNumber(CoordinatorEntity, NumberEntity):
         
     def _get_system_name(self) -> str | None:
         """Get the system name from device info."""
+        if custom_name := self._entry.data.get("name"):
+            return custom_name
         data = self.coordinator.data or {}
         for part in ("state", "params", "info"):
             d = data.get(part) or {}
@@ -82,6 +84,15 @@ class SiegeniaFanPowerNumber(CoordinatorEntity, NumberEntity):
                 if system_name:
                     return system_name
         return None
+
+    @property
+    def device_info(self):
+        return build_device_info(
+            self.coordinator.data, 
+            self._entry.entry_id, 
+            self._entry.data.get("host"),
+            self._entry.data.get("name")
+        )
 
     def _d(self) -> dict:
         return _combined(self.coordinator.data)

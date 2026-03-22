@@ -78,11 +78,16 @@ class SiegeniaKeySensor(CoordinatorEntity, SensorEntity):
     @property
     def device_info(self):
         return build_device_info(
-            self.coordinator.data, self._entry.entry_id, self._entry.data.get("host")
+            self.coordinator.data, 
+            self._entry.entry_id, 
+            self._entry.data.get("host"),
+            self._entry.data.get("name")
         )
             
     def _get_system_name(self) -> str | None:
         """Get the system name from device info."""
+        if custom_name := self._entry.data.get("name"):
+            return custom_name
         data = self.coordinator.data or {}
         for part in ("state", "params", "info"):
             d = data.get(part) or {}
@@ -127,6 +132,8 @@ class SiegeniaRawStateSensor(CoordinatorEntity, SensorEntity):
         
     def _get_system_name(self) -> str | None:
         """Get the system name from device info."""
+        if custom_name := self._entry.data.get("name"):
+            return custom_name
         data = self.coordinator.data or {}
         for part in ("state", "params", "info"):
             d = data.get(part) or {}
@@ -139,7 +146,10 @@ class SiegeniaRawStateSensor(CoordinatorEntity, SensorEntity):
     @property
     def device_info(self):
         return build_device_info(
-            self.coordinator.data, self._entry.entry_id, self._entry.data.get("host")
+            self.coordinator.data, 
+            self._entry.entry_id, 
+            self._entry.data.get("host"),
+            self._entry.data.get("name")
         )
 
     @property

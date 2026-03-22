@@ -14,7 +14,7 @@ def _coerce_str(value) -> str | None:
     return str(value)
 
 
-def build_device_info(data: dict | None, entry_id: str, host: str | None = None) -> dict:
+def build_device_info(data: dict | None, entry_id: str, host: str | None = None, custom_name: str | None = None) -> dict:
     info = _info_from_data(data)
     serial_raw = info.get("serialnr") or info.get("serial_number")
     identifiers = {(DOMAIN, str(serial_raw))} if serial_raw else {(DOMAIN, entry_id)}
@@ -25,7 +25,8 @@ def build_device_info(data: dict | None, entry_id: str, host: str | None = None)
     }
 
     name = (
-        info.get("systemname")
+        custom_name
+        or info.get("systemname")
         or info.get("devicename")
         or info.get("device_name")
         or info.get("name")
