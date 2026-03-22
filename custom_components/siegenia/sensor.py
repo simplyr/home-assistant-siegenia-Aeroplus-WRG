@@ -154,11 +154,16 @@ class SiegeniaRawStateSensor(CoordinatorEntity, SensorEntity):
 
     @property
     def native_value(self) -> str:
-        from json import dumps
+        # Keep the main state safely under the 255-character limit
+        return "Data Available" if self.coordinator.data else "Waiting for data"
+
+    @property
+    def extra_state_attributes(self) -> Dict[str, Any]:
+        # Put the massive JSON payload here, where Home Assistant allows unlimited size
         data = self.coordinator.data or {}
         combined = {}
         for part in ("state", "params", "info"):
             d = data.get(part) or {}
             if isinstance(d, dict):
                 combined.update(d)
-        return dumps(combined, ensure_ascii=False)
+        return {"raw_data": combined}
